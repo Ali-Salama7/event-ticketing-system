@@ -23,20 +23,26 @@ enum SeatsStatus {
   BOOKED
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User { 
   id          Int       @id @default(autoincrement()) 
   email       String    @unique
   name        String?
   password    String
+  role        Role      @default(USER)
   bookings    Booking[]
 } 
 
 model Event {
-  id          Int       @id @default(autoincrement()) 
+  id          Int           @id @default(autoincrement()) 
   name        String
   location    String
-  date        DateTime  @default(now())
-  eventStatus EventStatus      
+  date        DateTime      @default(now())
+  eventStatus EventStatus   @default(BOOK)
   seats       Seat[]
 }
 
