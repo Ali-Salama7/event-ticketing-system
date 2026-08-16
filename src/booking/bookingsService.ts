@@ -2,6 +2,7 @@ import prisma from "../config/db.js";
 import { lockSeat as redisLockSeat, unlockSeat } from "./redisLock.js";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../shared/errors.js";
 import redis from "../config/redis.js";
+import { getIO } from "../config/socket.js";
 
 export class BookingsService{
     async lockSeat(userId: number,lockData: {seatId: number}){
@@ -18,6 +19,12 @@ export class BookingsService{
         }
 
         await redisLockSeat(userId, lockData.seatId)
+
+        getIO().to(`event:${seat.eventId}`).emit("seatLocked", {
+            seatId: lockData.seatId,
+            lockedBy: userId
+        })
+
         return { message: "Seat locked successfully", seatId: lockData.seatId }
     }
 
@@ -49,6 +56,13 @@ export class BookingsService{
             return createBooking
         })
         await unlockSeat(seatId, userId)
+
+        const seat = await prisma.seat.findUnique({where: {id: seatId}})
+        getIO().to(`event:${seat?.eventId}`).emit("seatBooked", {
+            seatId: seatId,
+            bookedBy: userId
+        })
+
         return booking
     }
 
