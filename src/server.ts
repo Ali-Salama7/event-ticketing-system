@@ -7,6 +7,7 @@ import eventsRoute from './events/eventsRoutes.js'
 import bookingsRoute from './booking/bookingsRoutes.js'
 import { errorHandle } from './middleware/errorHandler.js'
 import { initSocket } from './config/socket.js'
+import "./workers/seatExpiryWorker.js"
 
 const app = express()
 const PORT = process.env.PORT || 3000

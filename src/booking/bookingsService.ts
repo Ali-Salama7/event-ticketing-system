@@ -3,6 +3,7 @@ import { lockSeat as redisLockSeat, unlockSeat } from "./redisLock.js";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../shared/errors.js";
 import redis from "../config/redis.js";
 import { getIO } from "../config/socket.js";
+import { seatExpiryQueue } from "../config/queue.js";
 
 export class BookingsService{
     async lockSeat(userId: number,lockData: {seatId: number}){
@@ -20,6 +21,11 @@ export class BookingsService{
 
         await redisLockSeat(userId, lockData.seatId)
 
+        await seatExpiryQueue.add(
+            "checkExpiry",
+            {seatId: lockData.seatId, eventId: seat.eventId},
+            {delay: 302000}
+        )
         getIO().to(`event:${seat.eventId}`).emit("seatLocked", {
             seatId: lockData.seatId,
             lockedBy: userId
